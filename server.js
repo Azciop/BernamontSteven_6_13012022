@@ -20,7 +20,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // simple route
 app.get("/", (req, res) => {
-  res.json({ message: "Welcome to piquaante application." });
+  res.json({ message: "Welcome to piiquante application." });
 });
 
 const db = require("./config/db.config");
