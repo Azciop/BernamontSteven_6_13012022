@@ -1,19 +1,20 @@
-const sauce = require ("../models/sauce")
-
+var express = require('express');
+const sauce = require("../models/sauce");
+var app = express();
 app.get('/api/sauces', (req, res, next) => {
-    const sauces = [
-      { userId: "",
+  const sauces = [
+    {
+      userId: "",
       name: "",
       manufacturer: "",
       description: "",
       mainPepper: "",
       imageUrl: "",
       heat: "",
-      likes: "0",
-      dislikes: "0",
+      likes: "",
+      dislikes: "",
       usersLiked: [""],
       usersDisliked: [""],
-      }]
-    res.status(200).json(sauces);
-  });
-  
+    }]
+  res.status(200).json(sauces);
+});
