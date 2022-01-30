@@ -1,11 +1,10 @@
-const express = require('express');
-const app = express();
+const express = require("express");
 const router = express.Router();
 
-const sauceCtrl = require('../controllers/sauce')
+const sauceCtrl = require("../controllers/sauce");
 
+router.get("/:id", sauceCtrl.getOneSauce);
 router.get("/", sauceCtrl.getAllSauces);
-router.get("/api/sauces", sauceCtrl.getAllSauces);
-router.get("/:id", sauceCtrl,getOneSauce);
+
 
 module.exports = router;
