@@ -11,7 +11,7 @@ exports.readOneSauce = (req, res, next) => {
     .catch((error) => res.status(404).json({ error }));
 };
 
-//making a function and an export to read every sauces
+// making a function and an export to read every sauces
 exports.readAllSauces = (req, res, next) => {
   Sauce.find()
     .then((sauces) => {
