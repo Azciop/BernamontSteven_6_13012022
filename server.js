@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const routes = require("./app/routes")
+const path = require("path")
 // Init .env config
 require('dotenv').config();
 
@@ -22,8 +23,12 @@ app.use(express.urlencoded({ extended: true }));
 app.get("/", (req, res) => {
   res.json({ message: "Welcome to piiquante application." });
 });
-app.use(routes)
+app.use(routes);
+
+app.use('/images', express.static(path.join(__dirname, 'images')));
+
 const db = require("./config/db.config");
+
 // set port, listen for requests
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
