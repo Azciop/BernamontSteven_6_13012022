@@ -29,7 +29,7 @@ exports.rateSauce = (req, res, next) => {
   Sauce.findOne({ _id: req.params.id })
     .then((sauce) => {
       switch (req.body.like) {
-//   case one, we add a like by using a push method
+        //   case one, we add a like by using a push method
         case 1:
           if (!sauce.usersLiked.includes(req.body.userId)) {
             let toChange = {
@@ -37,7 +37,7 @@ exports.rateSauce = (req, res, next) => {
               $push: { usersLiked: req.body.userId },
             }
             if (sauce.usersDisliked.includes(req.body.userId)) {
-// if user wants to change his dislike to put a like, we push the like and we pull out the dislike
+              // if user wants to change his dislike to put a like, we push the like and we pull out the dislike
               toChange = {
                 $inc: { likes: +1, dislikes: -1 },
                 $push: { usersLiked: req.body.userId },
@@ -45,7 +45,7 @@ exports.rateSauce = (req, res, next) => {
               }
             }
             Sauce.updateOne(
-// we update the result for the like
+              // we update the result for the like
               { _id: req.params.id }, toChange)
               .then((sauce) => res.status(200).json({ message: "Liked !" }))
               .catch((error) => res.status(400).json({ error }));
@@ -55,14 +55,14 @@ exports.rateSauce = (req, res, next) => {
           }
           break;
         case -1:
-// case 2, we add a dislike by using the push method
+          // case 2, we add a dislike by using the push method
           if (!sauce.usersDisliked.includes(req.body.userId)) {
             let toChange = {
               $inc: { dislikes: req.body.like++ * -1 },
               $push: { usersDisliked: req.body.userId },
             }
             if (sauce.usersLiked.includes(req.body.userId)) {
-// if the user wants to change his like to a dislike, we push the dislike and we pull out the like
+              // if the user wants to change his like to a dislike, we push the dislike and we pull out the like
               toChange = {
                 $inc: { likes: -1, dislikes: +1 },
                 $push: { usersDisliked: req.body.userId },
@@ -70,7 +70,7 @@ exports.rateSauce = (req, res, next) => {
               }
             }
             Sauce.updateOne(
-// then we update the result
+              // then we update the result
               { _id: req.params.id }, toChange)
               .then((sauce) =>
                 res.status(200).json({ message: "Disliked !" })
@@ -84,11 +84,11 @@ exports.rateSauce = (req, res, next) => {
         case 0:
           Sauce.findOne({ _id: req.params.id })
             .then((sauce) => {
-// case 2, we want to take off a like or a dislike
+              // case 2, we want to take off a like or a dislike
               if (sauce.usersLiked.includes(req.body.userId)) {
                 Sauce.updateOne(
                   { _id: req.params.id },
-//  we use a pull method to take off a like
+                  //  we use a pull method to take off a like
                   { $pull: { usersLiked: req.body.userId }, $inc: { likes: -1 } }
                 )
                   .then((sauce) => {
@@ -99,7 +99,7 @@ exports.rateSauce = (req, res, next) => {
                 Sauce.updateOne(
                   { _id: req.params.id },
                   {
-//  we use a pull method to take off a dislike                    
+                    //  we use a pull method to take off a dislike                    
                     $pull: { usersDisliked: req.body.userId },
                     $inc: { dislikes: -1 },
                   })
@@ -120,8 +120,7 @@ exports.rateSauce = (req, res, next) => {
     })
 };
 
-
-//we make a function and a exports to creat a new sauce
+// we make a function and a exports to creat a new sauce
 exports.createSauce = (req, res, next) => {
   const sauceObject = JSON.parse(req.body.sauce);
   delete sauceObject._id;
@@ -133,3 +132,15 @@ exports.createSauce = (req, res, next) => {
     .then(() => res.status(201).json({ message: 'New sauce saved !' }))
     .catch(error => res.status(400).json({ error }));
 };
+
+// we make a function to update a sauce 
+exports.updateSauce = (req, res, next) => {
+  const sauceObject = req.file ?
+    {
+      ...JSON.parse(req.body.sauce),
+      imageUrl: `/images/${req.file.filename}`
+    } : { ...req.body }
+  Sauce.updateOne({ _id: req.params.id }, { ...sauceObject, _id: req.params.id })
+    .then(() => res.status(200).json({ message: 'Your sauce has been modified !' }))
+    .catch(error => res.status(400).json({ error }))
+}
