@@ -1,6 +1,8 @@
 // getting the sauce model's file
 const Sauce = require("../models/sauce");
 
+const fs = require('fs')
+
 // making a function and an export to find a specific sauce
 exports.readOneSauce = (req, res, next) => {
   Sauce.findOne({ _id: req.params.id })
@@ -135,12 +137,40 @@ exports.createSauce = (req, res, next) => {
 
 // we make a function to update a sauce 
 exports.updateSauce = (req, res, next) => {
-  const sauceObject = req.file ?
-    {
-      ...JSON.parse(req.body.sauce),
-      imageUrl: `/images/${req.file.filename}`
-    } : { ...req.body }
-  Sauce.updateOne({ _id: req.params.id }, { ...sauceObject, _id: req.params.id })
-    .then(() => res.status(200).json({ message: 'Your sauce has been modified !' }))
-    .catch(error => res.status(400).json({ error }))
-}
+  Sauce.findOne({ _id: req.params.id })
+    .then(sauceModify => {
+      const oldImageUrl = Sauce.imageUrl;
+      const filename = sauceModify.imageUrl.split('/images/')[1];
+      if (req.file) {
+        const sauceObject = {
+          ...JSON.parse(req.body.sauce),
+          imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
+        }
+        // We use the unlink method to delete the old picture 
+        fs.unlink(`images/${filename}`, () => {
+          Sauce.updateOne({ _id: req.params.id }, { ...sauceObject, _id: req.params.id })
+            .then(() => res.status(200).json({ message: 'Your sauce has been modified' }))
+            .catch(error => res.status(400).json({ error }));
+        });
+      } else {
+        const newSauceObject = req.body;
+        newSauceObject.imageUrl = oldImageUrl;
+        Sauce.updateOne({ _id: req.params.id }, { ...newSauceObject, _id: req.params.id })
+          .then(() => res.status(200).json({ message: 'Your sauce has been modified' }))
+          .catch(error => res.status(400).json({ error }));
+      }
+    })
+    .catch(error => res.status(500).json({ error }))
+};
+
+// we make a function to delete a sauce
+
+exports.deleteSauce = (req, res, next) => {
+  fs.unlink(`images/${filename}`, () => {
+    Sauce.deleteOne({ _id: req.params.id })
+      .then(() => res.status(200).json({ message: 'Your sauce has been deleted' }))
+      .catch(error => res.status(400).json({ error }));
+  }
+  )
+};
+
