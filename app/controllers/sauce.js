@@ -180,3 +180,8 @@ exports.deleteSauce = (req, res, next) => {
     }).catch(error => res.status(400).json({ error }));
   });
 };
+
+// report a sauce
+exports.reportSauce = (req, res, next) => {
+  
+}
