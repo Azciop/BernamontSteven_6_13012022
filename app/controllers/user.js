@@ -1,20 +1,43 @@
+// Importing bcrypt to hash passwords
 const bcrypt = require("bcrypt");
-const User = require("../models/user");
+
+// Importing jwt to make tokens
 const jwt = require("jsonwebtoken");
+
+// Importing the models
+const User = require("../models/user");
 const user = require("../models/user");
 const Sauce = require("../models/sauce");
 
 // Importing the filesystem module
-
 const fs = require("fs");
 
-// making the sign up function
+// Importing crypto-js to encrypt mails
+const CryptoJS = require("crypto-js");
+
+// importing the dotenv file
+const dotenv = require("dotenv");
+const result = dotenv.config();
+
+var express = require("express");
+var app = express();
+var hateoasLinker = require("express-hateoas-links");
+
+// replace standard express res.json with the new version
+app.use(hateoasLinker);
+
+// making the signup function
 exports.signup = (req, res, next) => {
+	// making the email encrypting function
+	const emailCryptoJS = CryptoJS.HmacSHA256(
+		req.body.email,
+		`${process.env.CRYPTOJS_KEY}`
+	).toString();
 	bcrypt
 		.hash(req.body.password, 10)
 		.then(hash => {
 			const user = new User({
-				email: req.body.email,
+				email: emailCryptoJS,
 				password: hash,
 			});
 			user
@@ -25,10 +48,14 @@ exports.signup = (req, res, next) => {
 		.catch(error => res.status(500).json({ error }));
 };
 
-// making the log in function
+// making the login function
 exports.login = (req, res, next) => {
 	// using findOne to find the user
-	User.findOne({ email: req.body.email })
+	const emailCryptoJS = CryptoJS.HmacSHA256(
+		req.body.email,
+		`${process.env.CRYPTOJS_KEY}`
+	).toString();
+	User.findOne({ email: emailCryptoJS })
 		.then(user => {
 			if (!user) {
 				return res.status(401).json({ error: "Utilisateur non trouvé !" });
@@ -158,3 +185,54 @@ exports.reportUser = (req, res, next) => {
 		})
 		.catch(error => res.status(400).json({ error }));
 };
+
+// HATEOAS Links
+
+function hateoasLinker(req) {
+	const baseUri = `${req.protocol}://${req.get("host")}`;
+
+	return [
+		{
+			rel: "signup",
+			method: "POST",
+			title: "Create an user",
+			href: baseUri + "/api/auth/",
+		},
+		{
+			rel: "login",
+			method: "POST",
+			title: "Login an user",
+			href: baseUri + "/api/auth/",
+		},
+		{
+			rel: "read",
+			method: "GET",
+			title: "Read user's data",
+			href: baseUri + "/api/auth/",
+		},
+		{
+			rel: "export",
+			method: "GET",
+			title: "Export user's data",
+			href: baseUri + "/api/auth/",
+		},
+		{
+			rel: "update",
+			method: "PUT",
+			title: "Update user's data",
+			href: baseUri + "/api/auth/",
+		},
+		{
+			rel: "delete",
+			method: "DELETE",
+			title: "Delete user's data",
+			href: baseUri + "/api/auth/",
+		},
+		{
+			rel: "report",
+			method: "POST",
+			title: "Report a user",
+			href: baseUri + "/api/auth/",
+		},
+	];
+}

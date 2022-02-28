@@ -4,6 +4,13 @@ const Sauce = require("../models/sauce");
 // importing the filesystem module
 const fs = require("fs");
 
+var express = require("express");
+var app = express();
+var hateoasLinker = require("express-hateoas-links");
+
+// replace standard express res.json with the new version
+app.use(hateoasLinker);
+
 // making a function and an export to find a specific sauce
 exports.readOneSauce = (req, res, next) => {
 	// using the findOne function to find a sauce
@@ -231,3 +238,54 @@ exports.reportSauce = (req, res, next) => {
 		})
 		.catch(error => res.status(400).json({ error }));
 };
+
+// HATEOAS links
+function hateoasLinker(req, id) {
+	const baseUri = `${req.protocol}://${req.get("host")}`;
+
+	return [
+		{
+			rel: "create",
+			method: "POST",
+			title: "Create a sauce",
+			href: baseUri + "/api/sauces",
+		},
+		{
+			rel: "update",
+			method: "PUT",
+			title: "Modify a sauce",
+			href: baseUri + "/api/sauces/",
+		},
+		{
+			rel: "readOne",
+			method: "GET",
+			title: "Read a sauce",
+			href: baseUri + "/api/sauces/",
+		},
+		{
+			rel: "readAllSauces",
+			method: "GET",
+			title: "Read all sauces",
+			href: baseUri + "/api/sauces",
+		},
+
+		{
+			rel: "delete",
+			method: "DELETE",
+			title: "Delete a sauce",
+			href: baseUri + "/api/sauces/",
+		},
+		{
+			rel: "rate",
+			method: "POST",
+			title: "Rate a sauce",
+			href: baseUri + "/api/sauces/",
+		},
+		{
+			rel: "report",
+			method: "POST",
+			title: "Report a sauce",
+			href: baseUri + "/api/sauces/",
+		},
+	];
+}
