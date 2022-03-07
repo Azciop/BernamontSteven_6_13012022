@@ -6,8 +6,6 @@ const jwt = require("jsonwebtoken");
 
 // Importing the models
 const User = require("../models/user");
-const user = require("../models/user");
-const Sauce = require("../models/sauce");
 
 // Importing the filesystem module
 const fs = require("fs");
@@ -26,26 +24,56 @@ var hateoasLinker = require("express-hateoas-links");
 // replace standard express res.json with the new version
 app.use(hateoasLinker);
 
+function encryptEmail(email) {
+	return CryptoJS.AES.encrypt(
+		email,
+		CryptoJS.enc.Base64.parse(process.env.PASSPHRASE),
+		{
+			iv: CryptoJS.enc.Base64.parse(process.env.IV),
+			mode: CryptoJS.mode.ECB,
+			padding: CryptoJS.pad.Pkcs7,
+		}
+	).toString();
+}
+
+function decryptEmail(email) {
+	var bytes = CryptoJS.AES.decrypt(
+		email,
+		CryptoJS.enc.Base64.parse(process.env.PASSPHRASE),
+		{
+			iv: CryptoJS.enc.Base64.parse(process.env.IV),
+			mode: CryptoJS.mode.ECB,
+			padding: CryptoJS.pad.Pkcs7,
+		}
+	);
+	return bytes.toString(CryptoJS.enc.Utf8);
+}
+
 // making the signup function
 exports.signup = (req, res, next) => {
 	// making the email encrypting function
-	const emailCryptoJS = CryptoJS.HmacSHA256(
-		req.body.email,
-		`${process.env.CRYPTOJS_KEY}`
-	).toString();
 	bcrypt
 		.hash(req.body.password, 10)
 		.then(hash => {
+			const emailEncrypted = encryptEmail(req.body.email);
 			const user = new User({
-				email: emailCryptoJS,
+				email: emailEncrypted,
 				password: hash,
 			});
 			user
 				.save()
-				.then(() => res.status(201).json({ message: "Utilisateur créé !" }))
+				.then((result) => {
+					result.email = decryptEmail(req.body.email)
+					res
+						.status(201)
+						.json(
+							{ message: " User Created !", data: req.body.email },
+							hateoasLinks(req, result.email,)
+						);
+				})
 				.catch(error => res.status(400).json({ error }));
 		})
-		.catch(error => res.status(500).json({ error }));
+		.catch(error => res.status(500).json(console.log(error)));
 };
 
 // making the login function
@@ -58,23 +86,25 @@ exports.login = (req, res, next) => {
 	User.findOne({ email: emailCryptoJS })
 		.then(user => {
 			if (!user) {
-				return res.status(401).json({ error: "Utilisateur non trouvé !" });
+				return res.status(401).json({ error: " User not found !" });
 			}
 			bcrypt
-
 				// checking if the two passwords matches. If not, send error message
 				.compare(req.body.password, user.password)
 				.then(valid => {
 					if (!valid) {
-						return res.status(401).json({ error: "Mot de passe incorrect !" });
+						return res.status(401).json({ error: "Wrong password !" });
 					}
-					res.status(200).json({
-						// if passwords matches, creat random secret token for a duration of 24h, and log in
-						userId: user._id,
-						token: jwt.sign({ userId: user._id }, "RANDOM_TOKEN_SECRET", {
-							expiresIn: "24h",
-						}),
-					});
+					res.status(200).json(
+						{
+							// if passwords matches, creat random secret token for a duration of 24h, and log in
+							userId: user._id,
+							token: jwt.sign({ userId: user._id }, "RANDOM_TOKEN_SECRET", {
+								expiresIn: "24h",
+							}),
+						},
+						hateoasLinks(req, user._id)
+					);
 				})
 				.catch(error => res.status(500).json({ error }));
 		})
@@ -95,10 +125,10 @@ exports.readUser = (req, res, next) => {
 				return res.status(404).json({ error: "User not found!" });
 			}
 			// send user infos as json
-			res.status(200).json(user);
+			res.status(200).json(user, hateoasLinks(req, user.id));
 		})
 		.catch(error => {
-			res.status(404).send({ error });
+			res.status(404).send(console.log(error));
 		});
 };
 
@@ -144,7 +174,12 @@ exports.updateUser = async (req, res, next) => {
 				return res.status(404).json({ error: "User not found !" });
 			}
 			// else, sending the confirmation message and update the user's infos
-			res.status(201).json({ message: "user updated" });
+			res
+				.status(201)
+				.json(
+					{ message: "user updated", data: user },
+					hateoasLinks(req, user._id)
+				);
 		})
 		.catch(error => res.status(400).json({ error }));
 };
@@ -181,14 +216,16 @@ exports.reportUser = (req, res, next) => {
 				// if user not found, send error message
 				return res.status(404).json({ error: "User not found !" });
 			} // else, report the user and send message
-			res.status(200).json({ message: "user reported" });
+			res
+				.status(200)
+				.json({ message: "user reported" }, hateoasLinks(req, user._id));
 		})
 		.catch(error => res.status(400).json({ error }));
 };
 
 // HATEOAS Links
 
-function hateoasLinker(req) {
+function hateoasLinks(req, id) {
 	const baseUri = `${req.protocol}://${req.get("host")}`;
 
 	return [
@@ -196,25 +233,25 @@ function hateoasLinker(req) {
 			rel: "signup",
 			method: "POST",
 			title: "Create an user",
-			href: baseUri + "/api/auth/",
+			href: baseUri + "/api/auth/signup",
 		},
 		{
 			rel: "login",
 			method: "POST",
 			title: "Login an user",
-			href: baseUri + "/api/auth/",
+			href: baseUri + "/api/auth/login",
 		},
 		{
 			rel: "read",
 			method: "GET",
 			title: "Read user's data",
-			href: baseUri + "/api/auth/",
+			href: baseUri + "/api/auth/read",
 		},
 		{
 			rel: "export",
 			method: "GET",
 			title: "Export user's data",
-			href: baseUri + "/api/auth/",
+			href: baseUri + "/api/auth/export",
 		},
 		{
 			rel: "update",
@@ -232,7 +269,7 @@ function hateoasLinker(req) {
 			rel: "report",
 			method: "POST",
 			title: "Report a user",
-			href: baseUri + "/api/auth/",
+			href: baseUri + "/api/auth/report/" + id,
 		},
 	];
 }
