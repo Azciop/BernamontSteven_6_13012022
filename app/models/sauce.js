@@ -1,5 +1,7 @@
+// Importing the mongoose module
 const mongoose = require('mongoose');
 
+// Making a sauce model to define the requirement to make a sauce
 const sauceSchema = mongoose.Schema({
   userId: { type: String, required: true, ref: "User"},
   name: { type: String, required: true, trim: true, minlength: 2},
@@ -16,4 +18,5 @@ const sauceSchema = mongoose.Schema({
   whoReported: [{ type: String, ref: "User"}],
 });
 
+// then we export this model
 module.exports = mongoose.model('Sauce', sauceSchema);

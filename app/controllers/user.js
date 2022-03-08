@@ -7,47 +7,52 @@ const jwt = require("jsonwebtoken");
 // Importing the models
 const User = require("../models/user");
 
-// Importing the filesystem module
-const fs = require("fs");
-
-// Importing crypto-js to encrypt mails
-const CryptoJS = require("crypto-js");
-
 // importing the dotenv file
 const dotenv = require("dotenv");
 const result = dotenv.config();
+require('dotenv').config();
 
+// Importing the filesystem module
+const fs = require("fs");
+
+const CryptoJS = require("crypto-js");
+
+// Importing express 
 var express = require("express");
 var app = express();
+
+// Importing hateoas module
 var hateoasLinker = require("express-hateoas-links");
 
 // replace standard express res.json with the new version
 app.use(hateoasLinker);
 
+// Making a function to encrypt the email
 function encryptEmail(email) {
 	return CryptoJS.AES.encrypt(
-		email,
-		CryptoJS.enc.Base64.parse(process.env.PASSPHRASE),
-		{
-			iv: CryptoJS.enc.Base64.parse(process.env.IV),
-			mode: CryptoJS.mode.ECB,
-			padding: CryptoJS.pad.Pkcs7,
-		}
+	  email,
+	  CryptoJS.enc.Base64.parse(process.env.PASSPHRASE),
+	  {
+		iv: CryptoJS.enc.Base64.parse(process.env.IV),
+		mode: CryptoJS.mode.ECB,
+		padding: CryptoJS.pad.Pkcs7,
+	  }
 	).toString();
-}
-
-function decryptEmail(email) {
+  }
+  
+  // Making a function to decrypt the email
+  function decryptEmail(email) {
 	var bytes = CryptoJS.AES.decrypt(
-		email,
-		CryptoJS.enc.Base64.parse(process.env.PASSPHRASE),
-		{
-			iv: CryptoJS.enc.Base64.parse(process.env.IV),
-			mode: CryptoJS.mode.ECB,
-			padding: CryptoJS.pad.Pkcs7,
-		}
+	  email,
+	  CryptoJS.enc.Base64.parse(process.env.PASSPHRASE),
+	  {
+		iv: CryptoJS.enc.Base64.parse(process.env.IV),
+		mode: CryptoJS.mode.ECB,
+		padding: CryptoJS.pad.Pkcs7,
+	  }
 	);
 	return bytes.toString(CryptoJS.enc.Utf8);
-}
+  }
 
 // making the signup function
 exports.signup = (req, res, next) => {
@@ -55,6 +60,7 @@ exports.signup = (req, res, next) => {
 	bcrypt
 		.hash(req.body.password, 10)
 		.then(hash => {
+			// we get the encrypted email and we creat the user object
 			const emailEncrypted = encryptEmail(req.body.email);
 			const user = new User({
 				email: emailEncrypted,
@@ -63,12 +69,13 @@ exports.signup = (req, res, next) => {
 			user
 				.save()
 				.then((result) => {
-					result.email = decryptEmail(req.body.email)
+					// we get the email to send it to the hateoas
+					result.email = req.body.email
 					res
 						.status(201)
 						.json(
-							{ message: " User Created !", data: req.body.email },
-							hateoasLinks(req, result.email,)
+							{ message: " User Created !", data: result },
+							hateoasLinks(req, result._id)
 						);
 				})
 				.catch(error => res.status(400).json({ error }));
@@ -78,11 +85,9 @@ exports.signup = (req, res, next) => {
 
 // making the login function
 exports.login = (req, res, next) => {
+	// we get the encrypted email
+	const emailCryptoJS = encryptEmail(req.body.email);
 	// using findOne to find the user
-	const emailCryptoJS = CryptoJS.HmacSHA256(
-		req.body.email,
-		`${process.env.CRYPTOJS_KEY}`
-	).toString();
 	User.findOne({ email: emailCryptoJS })
 		.then(user => {
 			if (!user) {
@@ -118,12 +123,13 @@ exports.login = (req, res, next) => {
 // find user and send infos in JSON
 exports.readUser = (req, res, next) => {
 	// using FindONe to find the user
-	User.findOne({ userId: req.auth.userId })
+	User.findOne({ _id: req.auth.userId })
 		.then(user => {
 			// if user does not match, send error message
 			if (!user) {
 				return res.status(404).json({ error: "User not found!" });
 			}
+			user.email = decryptEmail(user.email)
 			// send user infos as json
 			res.status(200).json(user, hateoasLinks(req, user.id));
 		})
@@ -135,11 +141,12 @@ exports.readUser = (req, res, next) => {
 // find user and send infos in txt
 exports.exportUser = (req, res, next) => {
 	// Using findOne to find the user
-	User.findOne({ userId: req.auth.userId }).then(user => {
+	User.findOne({ _id: req.auth.userId }).then(user => {
 		// if user does not match, send error message
 		if (!user) {
 			return res.status(404).json({ error: "User not found !" });
 		}
+		user.email = decryptEmail(user.email)
 		// stringify user infos as txt file
 		const string = user.toString();
 
@@ -167,7 +174,7 @@ exports.updateUser = async (req, res, next) => {
 		update.email = req.body.email;
 	}
 	// using the findOneAndUpdate function to update the desired change
-	User.findOneAndUpdate({ userId: req.auth.userId }, update)
+	User.findOneAndUpdate({ _id: req.auth.userId }, update)
 		.then(user => {
 			// if user not found, send error message
 			if (!user) {
@@ -187,14 +194,15 @@ exports.updateUser = async (req, res, next) => {
 // delete the user
 exports.deleteUser = (req, res, next) => {
 	// using the findOneAndDelete function to delete the desired user
-	User.findOneAndDelete({ userId: req.auth.userId })
+	User.findOneAndDelete({ _id: req.auth.userId })
 		.then(user => {
 			// if user not found, send error message
 			if (!user) {
 				return res.status(404).json({ error: "User not found !" });
 			}
 			// else, delete the user
-			res.status(204).send();
+			res.send({message: "user has been deleted"});
+			
 		})
 		.catch(error => res.status(400).json({ error }));
 };
@@ -222,6 +230,7 @@ exports.reportUser = (req, res, next) => {
 		})
 		.catch(error => res.status(400).json({ error }));
 };
+
 
 // HATEOAS Links
 

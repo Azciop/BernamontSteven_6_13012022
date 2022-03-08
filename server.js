@@ -1,6 +1,13 @@
+// Importing the Express module
 const express = require("express");
+
+// Importing the cors module
 const cors = require("cors");
+
+// Importing the  routes
 const routes = require("./app/routes");
+
+// Importing the path module
 const path = require("path");
 
 // Importing the mongoose module
@@ -21,13 +28,19 @@ const slowDown = require("express-slow-down");
 // Init .env config
 require('dotenv').config();
 
+// importing the express module
 const app = express();
 
+// importing the hateoas module
 var hateoasLinker = require('express-hateoas-links');
 
+// we import the cors options
 var corsOptions = {
   origin: "http://127.0.0.1:8081"
 };
+
+// importing db confing to allow our database to work
+const db = require("./config/db.config");
 
 app.use(cors(corsOptions));
 
@@ -44,6 +57,7 @@ app.get("/", (req, res) => {
 
 app.use(mongoSanitize());
 
+// we use a rateLimit to limit the repeated requests an user can do on our api
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
@@ -51,6 +65,7 @@ const apiLimiter = rateLimit({
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
 });
 
+// we use a speedlimiter to limit the speed of the flux in our nodeJS
 const speedLimiter = slowDown({
   windowMs: 15 * 60 * 1000, // 15 minutes
   delayAfter: 100, // allow 100 requests per 15 minutes, then...
@@ -72,9 +87,9 @@ app.use(hateoasLinker);
 
 app.use(routes);
 
+// using express.static to serv our images in express
 app.use('/images', express.static(path.join(__dirname, 'images')));
 
-const db = require("./config/db.config");
 
 // set port, listen for requests
 const PORT = process.env.PORT || 8080;

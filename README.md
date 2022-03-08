@@ -38,6 +38,8 @@ PASSPHRASE =
 
 IV =
 
+SECRETKEY =
+
 ```
 
 The server must run on port=3000
