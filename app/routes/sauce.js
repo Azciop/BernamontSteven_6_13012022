@@ -5,7 +5,7 @@ const router = express.Router();
 // importing our sauce controller and also our auth and multer middleware
 const sauceCtrl = require("../controllers/sauce");
 const auth = require("../middleware/auth");
-const multer = require('../middleware/multer-config');
+const multer = require("../middleware/multer-config");
 
 // We make our routes to create a sauce and to like a sauce
 router.post("/", auth, multer, sauceCtrl.createSauce);
@@ -19,9 +19,9 @@ router.get("/", sauceCtrl.readAllSauces);
 router.put("/:id", auth, multer, sauceCtrl.updateSauce);
 
 // We make our route to delete a sauce
-router.delete('/:id', auth, sauceCtrl.deleteSauce);
+router.delete("/:id", auth, sauceCtrl.deleteSauce);
 
 // We make our route to report a sauce (RGPD rules)
-router.post('/report/:id', auth, sauceCtrl.reportSauce)
+router.post("/report/:id", auth, sauceCtrl.reportSauce);
 
 module.exports = router;

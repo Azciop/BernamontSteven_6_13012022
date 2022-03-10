@@ -40,7 +40,7 @@ if (!process.env.MONGO_URI) {
   console.log("No DB_URL found in .env configuration");
 }
 
-// we make a serializer function to stringify 
+// we make a serializer function to stringify
 function serializer(data) {
   let query = JSON.stringify(data.query);
   let options = JSON.stringify(data.options || {});
@@ -72,7 +72,7 @@ mongoose
   .then(() => {
     console.log("Connected to database");
   })
-  .catch((error) => {
+  .catch(error => {
     console.log("Database connection error: " + error);
   });
 

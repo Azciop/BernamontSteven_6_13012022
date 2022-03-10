@@ -10,14 +10,11 @@ const User = require("../models/user");
 // importing the dotenv file
 const dotenv = require("dotenv");
 const result = dotenv.config();
-require('dotenv').config();
-
-// Importing the filesystem module
-const fs = require("fs");
+require("dotenv").config();
 
 const CryptoJS = require("crypto-js");
 
-// Importing express 
+// Importing express
 var express = require("express");
 var app = express();
 
@@ -30,29 +27,29 @@ app.use(hateoasLinker);
 // Making a function to encrypt the email
 function encryptEmail(email) {
 	return CryptoJS.AES.encrypt(
-	  email,
-	  CryptoJS.enc.Base64.parse(process.env.PASSPHRASE),
-	  {
-		iv: CryptoJS.enc.Base64.parse(process.env.IV),
-		mode: CryptoJS.mode.ECB,
-		padding: CryptoJS.pad.Pkcs7,
-	  }
+		email,
+		CryptoJS.enc.Base64.parse(process.env.PASSPHRASE),
+		{
+			iv: CryptoJS.enc.Base64.parse(process.env.IV),
+			mode: CryptoJS.mode.ECB,
+			padding: CryptoJS.pad.Pkcs7,
+		}
 	).toString();
-  }
-  
-  // Making a function to decrypt the email
-  function decryptEmail(email) {
+}
+
+// Making a function to decrypt the email
+function decryptEmail(email) {
 	var bytes = CryptoJS.AES.decrypt(
-	  email,
-	  CryptoJS.enc.Base64.parse(process.env.PASSPHRASE),
-	  {
-		iv: CryptoJS.enc.Base64.parse(process.env.IV),
-		mode: CryptoJS.mode.ECB,
-		padding: CryptoJS.pad.Pkcs7,
-	  }
+		email,
+		CryptoJS.enc.Base64.parse(process.env.PASSPHRASE),
+		{
+			iv: CryptoJS.enc.Base64.parse(process.env.IV),
+			mode: CryptoJS.mode.ECB,
+			padding: CryptoJS.pad.Pkcs7,
+		}
 	);
 	return bytes.toString(CryptoJS.enc.Utf8);
-  }
+}
 
 // making the signup function
 exports.signup = (req, res, next) => {
@@ -68,9 +65,9 @@ exports.signup = (req, res, next) => {
 			});
 			user
 				.save()
-				.then((result) => {
+				.then(result => {
 					// we get the email to send it to the hateoas
-					result.email = req.body.email
+					result.email = req.body.email;
 					res
 						.status(201)
 						.json(
@@ -129,7 +126,7 @@ exports.readUser = (req, res, next) => {
 			if (!user) {
 				return res.status(404).json({ error: "User not found!" });
 			}
-			user.email = decryptEmail(user.email)
+			user.email = decryptEmail(user.email);
 			// send user infos as json
 			res.status(200).json(user, hateoasLinks(req, user.id));
 		})
@@ -146,7 +143,7 @@ exports.exportUser = (req, res, next) => {
 		if (!user) {
 			return res.status(404).json({ error: "User not found !" });
 		}
-		user.email = decryptEmail(user.email)
+		user.email = decryptEmail(user.email);
 		// stringify user infos as txt file
 		const string = user.toString();
 
@@ -201,8 +198,7 @@ exports.deleteUser = (req, res, next) => {
 				return res.status(404).json({ error: "User not found !" });
 			}
 			// else, delete the user
-			res.send({message: "user has been deleted"});
-			
+			res.send({ message: "user has been deleted" });
 		})
 		.catch(error => res.status(400).json({ error }));
 };
@@ -230,7 +226,6 @@ exports.reportUser = (req, res, next) => {
 		})
 		.catch(error => res.status(400).json({ error }));
 };
-
 
 // HATEOAS Links
 

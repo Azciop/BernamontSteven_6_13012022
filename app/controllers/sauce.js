@@ -4,11 +4,12 @@ const Sauce = require("../models/sauce");
 // importing the filesystem module
 const fs = require("fs");
 
+// Importing the express modules
 var express = require("express");
 var app = express();
-var hateoasLinker = require("express-hateoas-links");
 
-// replace standard express res.json with the new version
+// importing the HATEOASlinker module
+var hateoasLinker = require("express-hateoas-links");
 app.use(hateoasLinker);
 
 // making a function and an export to find a specific sauce
@@ -31,9 +32,10 @@ exports.readAllSauces = (req, res, next) => {
 			// using a .map to make an array that includes every sauces
 			sauces = sauces.map(sauce => {
 				// pushing every sauces and their image
-				sauce.imageUrl = `${req.protocol}://${req.get("host") + sauce.imageUrl
-					}`;
-					sauce.links = hateoasLinks(req, sauce._id)
+				sauce.imageUrl = `${req.protocol}://${
+					req.get("host") + sauce.imageUrl
+				}`;
+				sauce.links = hateoasLinks(req, sauce._id);
 				return sauce;
 			});
 			res.status(200).json(sauces);
@@ -66,7 +68,14 @@ exports.rateSauce = (req, res, next) => {
 					// we update the result for the like
 					Sauce.updateOne({ _id: req.params.id }, toChange)
 						// then we send the result and the message
-						.then(sauce => res.status(200).json({ message: "Liked !", "data": sauce }, hateoasLinks(req, sauce._id)))
+						.then(sauce =>
+							res
+								.status(200)
+								.json(
+									{ message: "Liked !", data: sauce },
+									hateoasLinks(req, sauce._id)
+								)
+						)
 						.catch(error => res.status(400).json({ error }));
 				} else {
 					res.status(304).json();
@@ -91,7 +100,14 @@ exports.rateSauce = (req, res, next) => {
 					}
 					// then we update the result
 					Sauce.updateOne({ _id: req.params.id }, toChange)
-						.then(sauce => res.status(200).json({ message: "Disliked !", "data": sauce }, hateoasLinks(req, sauce._id)))
+						.then(sauce =>
+							res
+								.status(200)
+								.json(
+									{ message: "Disliked !", data: sauce },
+									hateoasLinks(req, sauce._id)
+								)
+						)
 						.catch(error => res.status(400).json({ error }));
 				} else {
 					res.status(304).json();
@@ -110,7 +126,12 @@ exports.rateSauce = (req, res, next) => {
 							)
 								.then(sauce => {
 									// then we send the result and the message
-									res.status(200).json({ message: "Sauce unliked", "data": sauce }, hateoasLinks(req, sauce._id));
+									res
+										.status(200)
+										.json(
+											{ message: "Sauce unliked", data: sauce },
+											hateoasLinks(req, sauce._id)
+										);
 								})
 								.catch(error => res.status(400).json({ error }));
 							// if it's a dislike, we take it off too
@@ -125,7 +146,12 @@ exports.rateSauce = (req, res, next) => {
 							)
 								.then(sauce => {
 									// then we push the result
-									res.status(200).json({ message: "Sauce undisliked !", "data": sauce }, hateoasLinks(req, sauce._id));
+									res
+										.status(200)
+										.json(
+											{ message: "Sauce undisliked !", data: sauce },
+											hateoasLinks(req, sauce._id)
+										);
 								})
 								.catch(error => res.status(400).json({ error }));
 						} else {
@@ -153,7 +179,14 @@ exports.createSauce = (req, res, next) => {
 	sauce
 		.save()
 		// then we push the new sauce and we send a message
-		.then((result) => res.status(201).json({ message: "New sauce saved !", "data": result }, hateoasLinks(req, result._id)))
+		.then(result =>
+			res
+				.status(201)
+				.json(
+					{ message: "New sauce saved !", data: result },
+					hateoasLinks(req, result._id)
+				)
+		)
 		.catch(error => res.status(400).json({ error }));
 };
 
@@ -178,8 +211,13 @@ exports.updateSauce = (req, res, next) => {
 						{ ...sauceObject, _id: req.params.id }
 					)
 						// then we send the message
-						.then((sauce) =>
-							res.status(200).json({ message: "Your sauce has been modified" , "data": sauce }, hateoasLinks(req, sauce._id))
+						.then(sauce =>
+							res
+								.status(200)
+								.json(
+									{ message: "Your sauce has been modified", data: sauce },
+									hateoasLinks(req, sauce._id)
+								)
 						)
 						.catch(error => res.status(400).json({ error }));
 				});
@@ -190,8 +228,13 @@ exports.updateSauce = (req, res, next) => {
 					{ ...req.body, _id: req.params.id }
 				)
 					// then, we send the message
-					.then((sauce) =>
-						res.status(200).json({ message: "Your sauce has been modified" , "data": sauce }, hateoasLinks(req, sauce._id))
+					.then(sauce =>
+						res
+							.status(200)
+							.json(
+								{ message: "Your sauce has been modified", data: sauce },
+								hateoasLinks(req, sauce._id)
+							)
 					)
 					.catch(error => res.status(400).json({ error }));
 			}
@@ -234,7 +277,12 @@ exports.reportSauce = (req, res, next) => {
 				return res.status(404).json({ error: "Sauce not found !" });
 			}
 			// else, report the sauce and send a message
-			res.status(200).json({ message: "Sauce reported", "data": sauce }, hateoasLinks(req, sauce._id));
+			res
+				.status(200)
+				.json(
+					{ message: "Sauce reported", data: sauce },
+					hateoasLinks(req, sauce._id)
+				);
 		})
 		.catch(error => res.status(400).json({ error }));
 };
