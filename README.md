@@ -24,23 +24,9 @@ To get access to the frontend repository you have to clone this [repository](htt
 git clone https://github.com/OpenClassrooms-Student-Center/Web-Developer-P6.git
 ```
 
-### > Import the .env file <
+### > Duplicate .env.example to .env and fill data <
 
-```
-
-PORT =
-
-MONGO_URI =
-
-CRYPTOJS_KEY =
-
-PASSPHRASE =
-
-IV =
-
-SECRETKEY =
-
-```
+### > PORTS <
 
 The server must run on port=3000
 
