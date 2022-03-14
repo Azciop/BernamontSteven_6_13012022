@@ -51,8 +51,18 @@ function decryptEmail(email) {
 	return bytes.toString(CryptoJS.enc.Utf8);
 }
 
+function emailValidator(email) {
+	const reg =
+		/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+	return reg.test(String(email).toLowerCase());
+}
+
+
 // making the signup function
 exports.signup = (req, res, next) => {
+	if (!emailValidator(req.body.email)) {
+		return res.status(400).json({ error: "invalid email" });
+	}
 	// making the email encrypting function
 	bcrypt
 		.hash(req.body.password, 10)
@@ -167,8 +177,11 @@ exports.updateUser = async (req, res, next) => {
 	}
 	// Making the email change
 	if (req.body.email) {
+		if (!emailValidator(req.body.email)) {
+			return res.status(400).json({ error: "invalid email" });
+		}
 		// changing the  email
-		update.email = req.body.email;
+		update.email = encryptEmail(req.body.email);
 	}
 	// using the findOneAndUpdate function to update the desired change
 	User.findOneAndUpdate({ _id: req.auth.userId }, update)

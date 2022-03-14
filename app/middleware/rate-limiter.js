@@ -13,8 +13,7 @@ const apiLimiter = rateLimit({
 	legacyHeaders: false, // Disable the `X-RateLimit-*` headers
 });
 
-
 // Apply the rate limiting middleware to API calls only
-app.use('/api', apiLimiter)
+app.use("/api", apiLimiter);
 
 module.exports = apiLimiter;
