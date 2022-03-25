@@ -57,7 +57,6 @@ function emailValidator(email) {
 	return reg.test(String(email).toLowerCase());
 }
 
-
 // making the signup function
 exports.signup = (req, res, next) => {
 	if (!emailValidator(req.body.email)) {

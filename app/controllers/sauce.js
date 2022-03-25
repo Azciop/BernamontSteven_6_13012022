@@ -32,9 +32,8 @@ exports.readAllSauces = (req, res, next) => {
 			// using a .map to make an array that includes every sauces
 			sauces = sauces.map(sauce => {
 				// pushing every sauces and their image
-				sauce.imageUrl = `${req.protocol}://${
-					req.get("host") + sauce.imageUrl
-				}`;
+				sauce.imageUrl = `${req.protocol}://${req.get("host") + sauce.imageUrl
+					}`;
 				sauce.links = hateoasLinks(req, sauce._id);
 				return sauce;
 			});
@@ -197,7 +196,7 @@ exports.updateSauce = (req, res, next) => {
 		.then(sauce => {
 			// we make a const to find the image we want to delete in case of a image change
 			const filename = sauce.imageUrl.split("/images/")[1];
-			if (req.file) {
+			if (req.auth == sauce.userId) {
 				// we make a object that contains the new values and the new image
 				const sauceObject = {
 					...JSON.parse(req.body.sauce),
@@ -209,7 +208,8 @@ exports.updateSauce = (req, res, next) => {
 					Sauce.updateOne(
 						{ _id: req.params.id },
 						{ ...sauceObject, _id: req.params.id }
-					)
+						)
+						
 						// then we send the message
 						.then(sauce =>
 							res
@@ -240,6 +240,7 @@ exports.updateSauce = (req, res, next) => {
 			}
 		})
 		.catch(error => res.status(500).json({ error }));
+
 };
 
 // we make a function to delete a sauce
@@ -252,7 +253,7 @@ exports.deleteSauce = (req, res, next) => {
 		fs.unlink(`images/${filename}`, () => {
 			// then we send the image
 			res.status(200).json({ message: "Your sauce has been deleted" });
-		}).catch(error => res.status(400).json({ error }));
+		});
 	});
 };
 
