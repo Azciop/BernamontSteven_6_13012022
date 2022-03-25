@@ -193,10 +193,15 @@ exports.createSauce = (req, res, next) => {
 exports.updateSauce = (req, res, next) => {
 	// Using the findOne method to find the sauce
 	Sauce.findOne({ _id: req.params.id })
-	.then(sauce => {
-		if (req.auth == sauce.userId) {
+		.then(sauce => {
+			if (req.auth.userId !== sauce.userId) { return res
+				.status(403)
+				.json(
+					{ message: "Access denied. This sauce is not your own." },
+				) }
 			// we make a const to find the image we want to delete in case of a image change
 			const filename = sauce.imageUrl.split("/images/")[1];
+			if (req.file ) {
 				// we make a object that contains the new values and the new image
 				const sauceObject = {
 					...JSON.parse(req.body.sauce),
@@ -208,8 +213,7 @@ exports.updateSauce = (req, res, next) => {
 					Sauce.updateOne(
 						{ _id: req.params.id },
 						{ ...sauceObject, _id: req.params.id }
-						)
-						
+					)
 						// then we send the message
 						.then(sauce =>
 							res
