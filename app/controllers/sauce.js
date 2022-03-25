@@ -193,10 +193,10 @@ exports.createSauce = (req, res, next) => {
 exports.updateSauce = (req, res, next) => {
 	// Using the findOne method to find the sauce
 	Sauce.findOne({ _id: req.params.id })
-		.then(sauce => {
+	.then(sauce => {
+		if (req.auth == sauce.userId) {
 			// we make a const to find the image we want to delete in case of a image change
 			const filename = sauce.imageUrl.split("/images/")[1];
-			if (req.auth == sauce.userId) {
 				// we make a object that contains the new values and the new image
 				const sauceObject = {
 					...JSON.parse(req.body.sauce),
